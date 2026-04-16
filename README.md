@@ -1,6 +1,6 @@
 # concurrency-lab
 
-Ambiente experimental para análise de estratégias de concorrência em Go, desenvolvido como projeto de iniciação científica.
+Ambiente experimental para análise de estratégias de concorrência em Go, desenvolvido como projeto open source.
 
 ## O que é
 
