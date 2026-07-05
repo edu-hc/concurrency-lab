@@ -1,0 +1,18 @@
+package scenario
+
+import (
+	"time"
+
+	"concurrency-lab/internal/event"
+	"concurrency-lab/internal/strategy"
+)
+
+// Scenario defines the parameters of a concurrency experiment.
+type Scenario struct {
+	Name             string
+	TotalEvents      int
+	RatePerSecond    int
+	WorkloadType     event.WorkloadType
+	WorkloadDuration time.Duration
+	Strategy         strategy.Strategy
+}
