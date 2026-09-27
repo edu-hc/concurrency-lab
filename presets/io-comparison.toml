@@ -1,0 +1,40 @@
+[defaults]
+total_events = 100000
+rate_per_second = 50000
+workload_duration = "5ms"
+timeout = "120s"
+
+[[scenarios]]
+name = "IO - Worker Pool (4)"
+workload_type = "IO"
+strategy = "workerpool"
+workers = 4
+
+[[scenarios]]
+name = "IO - Worker Pool (10)"
+workload_type = "IO"
+strategy = "workerpool"
+workers = 10
+
+[[scenarios]]
+name = "IO - On-Demand"
+workload_type = "IO"
+strategy = "ondemand"
+
+[[scenarios]]
+name = "IO - OnDemand Limited (10)"
+workload_type = "IO"
+strategy = "ondemand_limited"
+max_goroutines = 10
+
+[[scenarios]]
+name = "IO - Batching (10)"
+workload_type = "IO"
+strategy = "batching"
+batch_size = 10
+
+[[scenarios]]
+name = "IO - Sharding (10)"
+workload_type = "IO"
+strategy = "sharding"
+num_shards = 10

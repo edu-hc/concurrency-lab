@@ -1,0 +1,327 @@
+[defaults]
+total_events = 100000
+rate_per_second = 50000
+workload_duration = "5ms"
+timeout = "120s"
+
+# ========== BLOCO 1: Comparacao geral (IO 5ms) ==========
+
+[[scenarios]]
+name = "B1 - IO - Worker Pool (4)"
+workload_type = "IO"
+strategy = "workerpool"
+workers = 4
+
+[[scenarios]]
+name = "B1 - IO - Worker Pool (10)"
+workload_type = "IO"
+strategy = "workerpool"
+workers = 10
+
+[[scenarios]]
+name = "B1 - IO - Worker Pool (12)"
+workload_type = "IO"
+strategy = "workerpool"
+workers = 12
+
+[[scenarios]]
+name = "B1 - IO - On-Demand"
+workload_type = "IO"
+strategy = "ondemand"
+
+[[scenarios]]
+name = "B1 - IO - OnDemand Limited (10)"
+workload_type = "IO"
+strategy = "ondemand_limited"
+max_goroutines = 10
+
+[[scenarios]]
+name = "B1 - IO - OnDemand Limited (50)"
+workload_type = "IO"
+strategy = "ondemand_limited"
+max_goroutines = 50
+
+[[scenarios]]
+name = "B1 - IO - Batching (10)"
+workload_type = "IO"
+strategy = "batching"
+batch_size = 10
+
+[[scenarios]]
+name = "B1 - IO - Batching (100)"
+workload_type = "IO"
+strategy = "batching"
+batch_size = 100
+
+[[scenarios]]
+name = "B1 - IO - Contention Mutex (10)"
+workload_type = "IO"
+strategy = "contention_mutex"
+workers = 10
+
+[[scenarios]]
+name = "B1 - IO - Contention RWMutex (10)"
+workload_type = "IO"
+strategy = "contention_rwmutex"
+workers = 10
+
+[[scenarios]]
+name = "B1 - IO - Sharding (10)"
+workload_type = "IO"
+strategy = "sharding"
+num_shards = 10
+
+[[scenarios]]
+name = "B1 - IO - Pipeline (4/stage)"
+workload_type = "IO"
+strategy = "pipeline"
+workers_per_stage = 4
+
+[[scenarios]]
+name = "B1 - IO - Backpressure (10w, buf=0)"
+workload_type = "IO"
+strategy = "backpressure"
+workers = 10
+buffer_size = 0
+
+[[scenarios]]
+name = "B1 - IO - Backpressure (10w, buf=10)"
+workload_type = "IO"
+strategy = "backpressure"
+workers = 10
+buffer_size = 10
+
+[[scenarios]]
+name = "B1 - IO - Backpressure (10w, buf=100)"
+workload_type = "IO"
+strategy = "backpressure"
+workers = 10
+buffer_size = 100
+
+# ========== BLOCO 2: Comparacao geral (CPU 5ms) ==========
+
+[[scenarios]]
+name = "B2 - CPU - Worker Pool (4)"
+workload_type = "CPU"
+strategy = "workerpool"
+workers = 4
+
+[[scenarios]]
+name = "B2 - CPU - Worker Pool (10)"
+workload_type = "CPU"
+strategy = "workerpool"
+workers = 10
+
+[[scenarios]]
+name = "B2 - CPU - Worker Pool (12)"
+workload_type = "CPU"
+strategy = "workerpool"
+workers = 12
+
+[[scenarios]]
+name = "B2 - CPU - On-Demand"
+workload_type = "CPU"
+strategy = "ondemand"
+
+[[scenarios]]
+name = "B2 - CPU - OnDemand Limited (10)"
+workload_type = "CPU"
+strategy = "ondemand_limited"
+max_goroutines = 10
+
+[[scenarios]]
+name = "B2 - CPU - OnDemand Limited (50)"
+workload_type = "CPU"
+strategy = "ondemand_limited"
+max_goroutines = 50
+
+[[scenarios]]
+name = "B2 - CPU - Batching (10)"
+workload_type = "CPU"
+strategy = "batching"
+batch_size = 10
+
+[[scenarios]]
+name = "B2 - CPU - Batching (100)"
+workload_type = "CPU"
+strategy = "batching"
+batch_size = 100
+
+[[scenarios]]
+name = "B2 - CPU - Contention Mutex (10)"
+workload_type = "CPU"
+strategy = "contention_mutex"
+workers = 10
+
+[[scenarios]]
+name = "B2 - CPU - Contention RWMutex (10)"
+workload_type = "CPU"
+strategy = "contention_rwmutex"
+workers = 10
+
+[[scenarios]]
+name = "B2 - CPU - Sharding (10)"
+workload_type = "CPU"
+strategy = "sharding"
+num_shards = 10
+
+[[scenarios]]
+name = "B2 - CPU - Pipeline (4/stage)"
+workload_type = "CPU"
+strategy = "pipeline"
+workers_per_stage = 4
+
+[[scenarios]]
+name = "B2 - CPU - Backpressure (10w, buf=0)"
+workload_type = "CPU"
+strategy = "backpressure"
+workers = 10
+buffer_size = 0
+
+[[scenarios]]
+name = "B2 - CPU - Backpressure (10w, buf=10)"
+workload_type = "CPU"
+strategy = "backpressure"
+workers = 10
+buffer_size = 10
+
+[[scenarios]]
+name = "B2 - CPU - Backpressure (10w, buf=100)"
+workload_type = "CPU"
+strategy = "backpressure"
+workers = 10
+buffer_size = 100
+
+# ========== BLOCO 3: Contencao visivel (IO 100us) ==========
+
+[[scenarios]]
+name = "B3 - IO 100us - Worker Pool (10)"
+workload_type = "IO"
+workload_duration = "100us"
+strategy = "workerpool"
+workers = 10
+
+[[scenarios]]
+name = "B3 - IO 100us - Contention Mutex (10)"
+workload_type = "IO"
+workload_duration = "100us"
+strategy = "contention_mutex"
+workers = 10
+
+[[scenarios]]
+name = "B3 - IO 100us - Contention RWMutex (10)"
+workload_type = "IO"
+workload_duration = "100us"
+strategy = "contention_rwmutex"
+workers = 10
+
+[[scenarios]]
+name = "B3 - IO 100us - Sharding (10)"
+workload_type = "IO"
+workload_duration = "100us"
+strategy = "sharding"
+num_shards = 10
+
+[[scenarios]]
+name = "B3 - IO 100us - Contention Mutex (50)"
+workload_type = "IO"
+workload_duration = "100us"
+strategy = "contention_mutex"
+workers = 50
+
+[[scenarios]]
+name = "B3 - IO 100us - Contention RWMutex (50)"
+workload_type = "IO"
+workload_duration = "100us"
+strategy = "contention_rwmutex"
+workers = 50
+
+[[scenarios]]
+name = "B3 - IO 100us - Sharding (50)"
+workload_type = "IO"
+workload_duration = "100us"
+strategy = "sharding"
+num_shards = 50
+
+# ========== BLOCO 4: Contencao visivel (CPU 100us) ==========
+
+[[scenarios]]
+name = "B4 - CPU 100us - Worker Pool (10)"
+workload_type = "CPU"
+workload_duration = "100us"
+strategy = "workerpool"
+workers = 10
+
+[[scenarios]]
+name = "B4 - CPU 100us - Contention Mutex (10)"
+workload_type = "CPU"
+workload_duration = "100us"
+strategy = "contention_mutex"
+workers = 10
+
+[[scenarios]]
+name = "B4 - CPU 100us - Contention RWMutex (10)"
+workload_type = "CPU"
+workload_duration = "100us"
+strategy = "contention_rwmutex"
+workers = 10
+
+[[scenarios]]
+name = "B4 - CPU 100us - Sharding (10)"
+workload_type = "CPU"
+workload_duration = "100us"
+strategy = "sharding"
+num_shards = 10
+
+[[scenarios]]
+name = "B4 - CPU 100us - Contention Mutex (50)"
+workload_type = "CPU"
+workload_duration = "100us"
+strategy = "contention_mutex"
+workers = 50
+
+[[scenarios]]
+name = "B4 - CPU 100us - Contention RWMutex (50)"
+workload_type = "CPU"
+workload_duration = "100us"
+strategy = "contention_rwmutex"
+workers = 50
+
+[[scenarios]]
+name = "B4 - CPU 100us - Sharding (50)"
+workload_type = "CPU"
+workload_duration = "100us"
+strategy = "sharding"
+num_shards = 50
+
+# ========== BLOCO 5: Variacao de escala (IO 5ms) ==========
+
+[[scenarios]]
+name = "B5 - IO - Worker Pool (50)"
+workload_type = "IO"
+strategy = "workerpool"
+workers = 50
+
+[[scenarios]]
+name = "B5 - IO - OnDemand Limited (100)"
+workload_type = "IO"
+strategy = "ondemand_limited"
+max_goroutines = 100
+
+[[scenarios]]
+name = "B5 - IO - Batching (500)"
+workload_type = "IO"
+strategy = "batching"
+batch_size = 500
+
+[[scenarios]]
+name = "B5 - IO - Sharding (50)"
+workload_type = "IO"
+strategy = "sharding"
+num_shards = 50
+
+[[scenarios]]
+name = "B5 - IO - Pipeline (10/stage)"
+workload_type = "IO"
+strategy = "pipeline"
+workers_per_stage = 10

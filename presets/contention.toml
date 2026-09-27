@@ -1,0 +1,29 @@
+[defaults]
+total_events = 100000
+rate_per_second = 50000
+workload_duration = "100us"
+timeout = "120s"
+
+[[scenarios]]
+name = "CPU 100us - Worker Pool (10)"
+workload_type = "CPU"
+strategy = "workerpool"
+workers = 10
+
+[[scenarios]]
+name = "CPU 100us - Contention Mutex (10)"
+workload_type = "CPU"
+strategy = "contention_mutex"
+workers = 10
+
+[[scenarios]]
+name = "CPU 100us - Contention RWMutex (10)"
+workload_type = "CPU"
+strategy = "contention_rwmutex"
+workers = 10
+
+[[scenarios]]
+name = "CPU 100us - Sharding (10)"
+workload_type = "CPU"
+strategy = "sharding"
+num_shards = 10

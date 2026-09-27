@@ -4,13 +4,15 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
+	"github.com/urfave/cli/v2"
+
 	"concurrency-lab/internal/collector"
+	"concurrency-lab/internal/config"
 	"concurrency-lab/internal/event"
 	"concurrency-lab/internal/exporter"
-	"concurrency-lab/internal/scenario"
-	"concurrency-lab/internal/strategy"
 	"concurrency-lab/internal/template"
 )
 
@@ -28,114 +30,92 @@ func workloadTypeName(wt event.WorkloadType) string {
 }
 
 func main() {
-	scenarios := []scenario.Scenario{
-		// I/O bound - Worker Pool com poucos workers (gargalo no processamento)
-		{
-			Name:             "IO - Worker Pool (4 workers)",
-			TotalEvents:      10000,
-			RatePerSecond:    10000,
-			WorkloadType:     event.IO,
-			WorkloadDuration: 5 * time.Millisecond,
-			Strategy:         strategy.NewWorkerPool(4),
+	app := &cli.App{
+		Name:  "concurrency-lab",
+		Usage: "experimental framework for comparing Go concurrency strategies",
+		Commands: []*cli.Command{
+			{
+				Name:  "run",
+				Usage: "run a scenario battery from a TOML preset",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:     "preset",
+						Usage:    "path to the TOML preset file",
+						Required: true,
+					},
+					&cli.IntFlag{
+						Name:  "events",
+						Usage: "override total_events for every scenario",
+					},
+					&cli.IntFlag{
+						Name:  "rate",
+						Usage: "override rate_per_second for every scenario",
+					},
+					&cli.StringFlag{
+						Name:  "timeout",
+						Usage: `override the per-scenario timeout (e.g. "120s")`,
+					},
+					&cli.StringFlag{
+						Name:  "output",
+						Usage: "output directory for the exported CSV",
+						Value: "results",
+					},
+				},
+				Action: runAction,
+			},
 		},
-		{
-			Name:             "IO - Worker Pool (10 workers)",
-			TotalEvents:      10000,
-			RatePerSecond:    10000,
-			WorkloadType:     event.IO,
-			WorkloadDuration: 5 * time.Millisecond,
-			Strategy:         strategy.NewWorkerPool(10),
-		},
-		{
-			Name:             "IO - On-Demand",
-			TotalEvents:      10000,
-			RatePerSecond:    10000,
-			WorkloadType:     event.IO,
-			WorkloadDuration: 5 * time.Millisecond,
-			Strategy:         strategy.NewOnDemand(),
-		},
-		// CPU bound - mesma comparação
-		{
-			Name:             "CPU - Worker Pool (4 workers)",
-			TotalEvents:      10000,
-			RatePerSecond:    10000,
-			WorkloadType:     event.CPU,
-			WorkloadDuration: 5 * time.Millisecond,
-			Strategy:         strategy.NewWorkerPool(4),
-		},
-		{
-			Name:             "CPU - Worker Pool (10 workers)",
-			TotalEvents:      10000,
-			RatePerSecond:    10000,
-			WorkloadType:     event.CPU,
-			WorkloadDuration: 5 * time.Millisecond,
-			Strategy:         strategy.NewWorkerPool(10),
-		},
-		{
-			Name:             "CPU - On-Demand",
-			TotalEvents:      10000,
-			RatePerSecond:    10000,
-			WorkloadType:     event.CPU,
-			WorkloadDuration: 5 * time.Millisecond,
-			Strategy:         strategy.NewOnDemand(),
-		},
-		{
-			Name:             "IO - Batching (batch=10)",
-			TotalEvents:      10000,
-			RatePerSecond:    10000,
-			WorkloadType:     event.IO,
-			WorkloadDuration: 5 * time.Millisecond,
-			Strategy:         strategy.NewBatching(10),
-		},
-		{
-			Name:             "CPU - Batching (batch=10)",
-			TotalEvents:      10000,
-			RatePerSecond:    10000,
-			WorkloadType:     event.CPU,
-			WorkloadDuration: 5 * time.Millisecond,
-			Strategy:         strategy.NewBatching(10),
-		},
-		{
-			Name:             "IO - OnDemand Limited (10)",
-			TotalEvents:      10000,
-			RatePerSecond:    10000,
-			WorkloadType:     event.IO,
-			WorkloadDuration: 5 * time.Millisecond,
-			Strategy:         strategy.NewOnDemandLimited(10),
-		},
-		{
-			Name:             "IO - OnDemand Limited (50)",
-			TotalEvents:      10000,
-			RatePerSecond:    10000,
-			WorkloadType:     event.IO,
-			WorkloadDuration: 5 * time.Millisecond,
-			Strategy:         strategy.NewOnDemandLimited(50),
-		},
-		{
-			Name:             "CPU - OnDemand Limited (10)",
-			TotalEvents:      10000,
-			RatePerSecond:    10000,
-			WorkloadType:     event.CPU,
-			WorkloadDuration: 5 * time.Millisecond,
-			Strategy:         strategy.NewOnDemandLimited(10),
-		},
-		{
-			Name:             "CPU - OnDemand Limited (50)",
-			TotalEvents:      10000,
-			RatePerSecond:    10000,
-			WorkloadType:     event.CPU,
-			WorkloadDuration: 5 * time.Millisecond,
-			Strategy:         strategy.NewOnDemandLimited(50),
-		},
+	}
+
+	if err := app.Run(os.Args); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func runAction(c *cli.Context) error {
+	cfg, err := config.LoadTOML(c.String("preset"))
+	if err != nil {
+		return fmt.Errorf("loading preset: %w", err)
+	}
+
+	if c.IsSet("events") {
+		events := c.Int("events")
+		cfg.Defaults.TotalEvents = events
+		for i := range cfg.Scenarios {
+			cfg.Scenarios[i].TotalEvents = events
+		}
+	}
+	if c.IsSet("rate") {
+		rate := c.Int("rate")
+		cfg.Defaults.RatePerSecond = rate
+		for i := range cfg.Scenarios {
+			cfg.Scenarios[i].RatePerSecond = rate
+		}
+	}
+	if c.IsSet("timeout") {
+		cfg.Defaults.Timeout = c.String("timeout")
+	}
+
+	scenarios, timeout, kafkaCfg, err := cfg.BuildScenarios()
+	if err != nil {
+		return fmt.Errorf("building scenarios: %w", err)
 	}
 
 	var results []exporter.RunResult
 
 	for _, scn := range scenarios {
 		col := collector.NewInMemoryCollector()
-		tmpl := template.NewInMemory()
 
-		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+		var tmpl template.Template
+		switch scn.TemplateName {
+		case "", "inmemory":
+			tmpl = template.NewInMemory()
+		case "kafka":
+			tmpl = template.NewKafka(kafkaCfg.Brokers, kafkaCfg.Topic)
+		default:
+			return fmt.Errorf("scenario %q: unknown template %q", scn.Name, scn.TemplateName)
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 
 		err := tmpl.Execute(ctx, scn, col)
 		cancel()
@@ -168,9 +148,11 @@ func main() {
 		})
 	}
 
-	path, err := exporter.ExportCSV(results, "results")
+	path, err := exporter.ExportCSV(results, c.String("output"))
 	if err != nil {
-		log.Fatalf("exporting results: %v", err)
+		return fmt.Errorf("exporting results: %w", err)
 	}
 	fmt.Printf("Resultados exportados para: %s\n", path)
+
+	return nil
 }

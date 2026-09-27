@@ -1,0 +1,49 @@
+[kafka]
+brokers = ["localhost:9092"]
+topic = "payment-events"
+
+[defaults]
+total_events = 10000
+rate_per_second = 5000
+workload_duration = "5ms"
+timeout = "120s"
+
+[[scenarios]]
+name = "IO - Worker Pool (10) - InMemory"
+workload_type = "IO"
+strategy = "workerpool"
+workers = 10
+template = "inmemory"
+
+[[scenarios]]
+name = "IO - Worker Pool (10) - Kafka"
+workload_type = "IO"
+strategy = "workerpool"
+workers = 10
+template = "kafka"
+
+[[scenarios]]
+name = "IO - On-Demand - InMemory"
+workload_type = "IO"
+strategy = "ondemand"
+template = "inmemory"
+
+[[scenarios]]
+name = "IO - On-Demand - Kafka"
+workload_type = "IO"
+strategy = "ondemand"
+template = "kafka"
+
+[[scenarios]]
+name = "CPU - Worker Pool (10) - InMemory"
+workload_type = "CPU"
+strategy = "workerpool"
+workers = 10
+template = "inmemory"
+
+[[scenarios]]
+name = "CPU - Worker Pool (10) - Kafka"
+workload_type = "CPU"
+strategy = "workerpool"
+workers = 10
+template = "kafka"
