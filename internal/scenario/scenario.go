@@ -15,4 +15,7 @@ type Scenario struct {
 	WorkloadType     event.WorkloadType
 	WorkloadDuration time.Duration
 	Strategy         strategy.Strategy
+	// TemplateName selects which Template the runner should use to execute
+	// this scenario (e.g. "inmemory", "kafka").
+	TemplateName string
 }
