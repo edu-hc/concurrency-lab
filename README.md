@@ -78,6 +78,17 @@ Flags on `run`:
 
 Results are printed to the terminal and exported as CSV in the output directory. See `presets/` for ready-made batteries: `io-comparison.toml`, `contention.toml`, `battery-full.toml` (the full 49-scenario comparison), and `kafka-comparison.toml` (InMemory vs Kafka).
 
+### Charts
+
+`scripts/generate_charts.py` turns an exported CSV into comparison charts (PNG, 300 DPI). It's not run automatically — regenerate charts on demand from whichever CSV you just produced:
+
+```bash
+pip install -r scripts/requirements.txt
+python3 scripts/generate_charts.py --battery results/<battery-run>.csv --kafka results/<kafka-run>.csv --out results/charts
+```
+
+`--battery` produces `latency_gap.png` and `throughput_io_vs_cpu.png` (needs `B1 - IO - ...` / `B2 - CPU - ...` scenarios, e.g. from `battery-full.toml`); `--kafka` produces `inmemory_vs_kafka.png` (needs `<strategy> - InMemory` / `<strategy> - Kafka` scenarios, e.g. from `kafka-comparison.toml`). Pass either or both. Charts land in `results/`, which is gitignored — the script is checked in, its output isn't.
+
 ## Preliminary results
 
 ### Worker pool sizing and processing vs end-to-end latency (IO, 5ms workload, 100k events @ 50k/s)
