@@ -2,9 +2,7 @@ package strategy
 
 import (
 	"context"
-	"fmt"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"concurrency-lab/internal/collector"
@@ -14,12 +12,11 @@ import (
 
 // Backpressure processes events using a fixed pool of N worker goroutines
 // reading from a bounded internal channel. When the internal channel is
-// full, the dispatcher drops the event instead of blocking, recording it as
-// a failure and incrementing the dropped counter.
+// full, the dispatcher drops the event instead of blocking, reporting it to
+// the collector as a drop rather than a processed event.
 type Backpressure struct {
 	numWorkers int
 	bufferSize int
-	dropped    int64
 }
 
 func NewBackpressure(numWorkers int, bufferSize int) *Backpressure {
@@ -62,8 +59,7 @@ func (bp *Backpressure) Run(ctx context.Context, events <-chan event.Event, work
 			select {
 			case internal <- ev:
 			default:
-				atomic.AddInt64(&bp.dropped, 1)
-				col.Record(ev.ID, 0, time.Since(ev.CreatedAt), fmt.Errorf("dropped: buffer full"))
+				col.RecordDropped(ev.ID)
 			}
 		}
 	}()

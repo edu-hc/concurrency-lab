@@ -8,15 +8,31 @@ import (
 
 // Collector records processing results for individual events.
 type Collector interface {
+	// Record reports the outcome of an event that was actually attempted:
+	// processingTime and endToEndTime are only meaningful for a completed
+	// attempt (success or failure). err non-nil counts toward ErrorCount,
+	// but its duration is excluded from the latency percentiles/averages
+	// so a failed or cancelled attempt doesn't skew the numbers that
+	// describe successful processing.
 	Record(eventID string, processingTime time.Duration, endToEndTime time.Duration, err error)
+	// RecordDropped reports an event that was never attempted at all —
+	// shed at the door by a strategy under load (e.g. Backpressure) before
+	// any processing began. It only increments DroppedCount; it does not
+	// touch the latency percentiles/averages or Throughput's event count,
+	// since a drop has no processing time to report.
+	RecordDropped(eventID string)
 	Results() *Results
 	SetTotalDuration(d time.Duration)
 }
 
-// Results holds aggregated metrics for a completed experiment.
+// Results holds aggregated metrics for a completed experiment. All latency
+// fields are computed only from events recorded via Record with a nil
+// error; dropped events (RecordDropped) and failed/cancelled attempts
+// (Record with a non-nil error) are excluded, so these numbers describe
+// successful processing only.
 type Results struct {
 	TotalEvents   int
-	Throughput    float64 // events per second
+	Throughput    float64 // events per second, successful events only
 	AvgLatency    time.Duration
 	P50Latency    time.Duration
 	P95Latency    time.Duration
@@ -26,6 +42,7 @@ type Results struct {
 	P95EndToEnd   time.Duration
 	P99EndToEnd   time.Duration
 	ErrorCount    int
+	DroppedCount  int
 	TotalDuration time.Duration
 }
 
@@ -35,6 +52,7 @@ type InMemoryCollector struct {
 	durations         []time.Duration
 	endToEndDurations []time.Duration
 	errorCount        int
+	droppedCount      int
 	totalDuration     time.Duration
 }
 
@@ -45,11 +63,18 @@ func NewInMemoryCollector() *InMemoryCollector {
 func (c *InMemoryCollector) Record(eventID string, processingTime time.Duration, endToEndTime time.Duration, err error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.durations = append(c.durations, processingTime)
-	c.endToEndDurations = append(c.endToEndDurations, endToEndTime)
 	if err != nil {
 		c.errorCount++
+		return
 	}
+	c.durations = append(c.durations, processingTime)
+	c.endToEndDurations = append(c.endToEndDurations, endToEndTime)
+}
+
+func (c *InMemoryCollector) RecordDropped(eventID string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.droppedCount++
 }
 
 func (c *InMemoryCollector) SetTotalDuration(d time.Duration) {
@@ -66,6 +91,7 @@ func (c *InMemoryCollector) Results() *Results {
 	if n == 0 {
 		return &Results{
 			ErrorCount:    c.errorCount,
+			DroppedCount:  c.droppedCount,
 			TotalDuration: c.totalDuration,
 		}
 	}
@@ -105,6 +131,7 @@ func (c *InMemoryCollector) Results() *Results {
 		P95EndToEnd:   sortedE2E[percentileIndex(n, 95)],
 		P99EndToEnd:   sortedE2E[percentileIndex(n, 99)],
 		ErrorCount:    c.errorCount,
+		DroppedCount:  c.droppedCount,
 		TotalDuration: c.totalDuration,
 	}
 }
