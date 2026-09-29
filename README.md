@@ -13,7 +13,7 @@ The system is composed of eight components:
 - **Event** — payment event struct (UUID, amount in cents, currency, sender, receiver, workload type)
 - **Strategy** — concurrency interface that receives events via channel and processes them with a workload function
 - **Workload** — configurable functions that simulate CPU-bound and I/O-bound work
-- **Collector** — thread-safe inline metrics collection (throughput, processing and end-to-end latency, p50/p95/p99 percentiles)
+- **Collector** — thread-safe inline metrics collection (throughput, processing and end-to-end latency, p50/p95/p99 percentiles). Dropped events (shed under load, e.g. by `Backpressure`) are tracked separately from successes so they never skew the percentiles. `Aggregate` reduces N repeated runs of the same scenario into a median plus an interquartile range per metric.
 - **Scenario** — declarative struct with experiment parameters
 - **Template** — infrastructure context where the strategy runs (in-memory or Kafka)
 - **Config** — loads scenario batteries from TOML files, applying defaults and instantiating strategies via a factory
@@ -29,7 +29,7 @@ The system is composed of eight components:
 - **Contention RWMutex** — same idea, guarded by a `sync.RWMutex` (read-then-write per event)
 - **Sharding** — events routed by `hash(sender) % N` to independent, lock-free per-shard maps
 - **Pipeline** — three sequential stages (validate → process → record), each with its own worker pool
-- **Backpressure** — bounded internal channel; drops events (and records the failure) instead of blocking when full
+- **Backpressure** — bounded internal channel; drops events instead of blocking when full, tracked as drops (not errors) so they never skew success metrics
 
 ## Templates implemented
 
@@ -50,6 +50,7 @@ internal/
   config/            → TOML config loading and strategy factory
   exporter/          → result export (CSV)
 presets/             → example TOML scenario batteries
+scripts/             → chart generation (generate_charts.py) and its requirements.txt
 results/             → experiment output (gitignored)
 docker-compose.yml   → local Kafka broker (KRaft mode, single node)
 ```
@@ -75,8 +76,9 @@ Flags on `run`:
 - `--rate` — overrides `rate_per_second` for every scenario
 - `--timeout` — overrides the per-scenario timeout (e.g. `"120s"`)
 - `--output` — output directory for the exported CSV (default `results`)
+- `--repeat` — run each scenario N times and report the median (with IQR) across runs instead of a single sample (default 1; 5+ recommended for a real confidence interval — see "Preliminary results" below for why this matters for latency numbers specifically)
 
-Results are printed to the terminal and exported as CSV in the output directory. See `presets/` for ready-made batteries: `io-comparison.toml`, `contention.toml`, `battery-full.toml` (the full 49-scenario comparison), and `kafka-comparison.toml` (InMemory vs Kafka).
+Results are printed to the terminal and exported as CSV in the output directory. The CSV includes both the configured `total_events` and the collector's actual `events_processed`/`events_dropped` counts (a scenario can hit its timeout before finishing, or — for `Backpressure` — shed load on purpose), plus `throughput_iqr`/`p50_latency_iqr_us`/`p50_e2e_iqr_us` columns that are zero unless `--repeat` > 1. See `presets/` for ready-made batteries: `io-comparison.toml`, `contention.toml`, `battery-full.toml` (the full 49-scenario comparison), and `kafka-comparison.toml` (InMemory vs Kafka).
 
 ### Charts
 
